@@ -1,9 +1,15 @@
-import { Admin, Prisma, UserRole, UserStatus } from "../../../generated/prisma";
+import { Admin, Prisma, UserStatus } from "../../../generated/prisma";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import prisma from "../../../shared/prisma";
+import { IPaginationOptions } from "../../interfaces/pagination";
 import { adminSearchableFields } from "./admin.constant";
+import { IAdminFilterRequest } from "./admin.interface";
 
-const getAllAdminFromDB = async (params: any, options: any) => {
+const getAllAdminFromDB = async (
+  params: IAdminFilterRequest,
+  options: IPaginationOptions
+) => {
+  console.log(params);
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { searchTerm, ...filterData } = params;
   const andConditions: Prisma.AdminWhereInput[] = [];
@@ -20,12 +26,12 @@ const getAllAdminFromDB = async (params: any, options: any) => {
   }
 
   //Object theke array banano jai , specific field er upor filtering korte chaile aitai way
-  if (Object.keys(filterData.length > 0)) {
+  if (Object.keys(filterData).length > 0) {
     // And hoite hobe shob operation maintain korte hobe
     andConditions.push({
       AND: Object.keys(filterData).map((key) => ({
         [key]: {
-          equals: filterData[key],
+          equals: (filterData as any)[key],
         },
       })),
     });
@@ -87,16 +93,18 @@ const updateAdminByIdIntoDB = async (
   //Jodi id exist na kore it will throw in built error by prisma
   await prisma.admin.findUniqueOrThrow({
     where: {
-      id: id,
+      id,
       isDeleted: false,
     },
   });
+
   const result = await prisma.admin.update({
     where: {
       id,
     },
     data,
   });
+
   return result;
 };
 
