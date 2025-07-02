@@ -10,7 +10,7 @@ const globalErrorHandler = (
   // console.log("Error occured!");
   res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
     success: false,
-    message: err.name || "Something went wrong",
+    message: err.message || "Something went wrong",
     error: err,
   });
 };
