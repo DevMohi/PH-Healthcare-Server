@@ -23,6 +23,7 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
     message: "Logged in successfully",
     data: {
       accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
       needPasswordChange: result.needPasswordChange,
     },
   });
@@ -30,6 +31,7 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 
 const refreshToken = catchAsync(async (req: Request, res: Response) => {
   const { refreshToken } = req.cookies;
+  console.log(refreshToken);
   const result = await AuthServices.refreshToken(refreshToken);
 
   sendResponse(res, {
