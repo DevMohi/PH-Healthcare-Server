@@ -4,6 +4,9 @@ import { UserStatus } from "../../../generated/prisma";
 import { jwtHelpers } from "../../../helpers/jwtHelper";
 import prisma from "../../../shared/prisma";
 import bcrypt from "bcrypt";
+import { emaiLSender } from "./emailSender";
+import ApiError from "../../errors/ApiErrors";
+import httpStatus from "http-status";
 
 const loginUser = async (payload: { email: string; password: string }) => {
   console.log("User logged in", payload);
@@ -129,7 +132,7 @@ const changePasswordInDB = async (user: any, payload: any) => {
   await prisma.user.update({
     where: {
       email: userData.email,
-      status: UserStatus.ACTIVE,
+      status: UserStatus.ACTIVE, //mane blocked user ra korte parbena password change
     },
     data: {
       password: hashedPassword,
@@ -142,8 +145,94 @@ const changePasswordInDB = async (user: any, payload: any) => {
   };
 };
 
+const forgotPassword = async (payload: { email: string }) => {
+  //Steps
+  //Check Email ta exist kore kina in db and active naki
+  //Generate a token with the user email , role, token secret and time ,
+  //Generate a link with the frontendurl + id and the token
+  //Use Nodemailer to send the token of url to users gmail
+
+  //kar password ta change korte chai (seita hocce email) , check exist kore kina
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: payload.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  //Ekta token generate korbo , that has information in it
+  const resetPasswordToken = jwtHelpers.generateToken(
+    {
+      email: userData.email,
+      role: userData.role,
+    },
+    config.jwt.reset_password_secret as Secret,
+    config.jwt.reset_password_token_expires_in as String
+  );
+  // console.log(resetPasswordToken, "See this ");
+
+  //Ekta link generate korbo
+  const resetPasswordLink =
+    config.reset_pass_link + `?id=${userData.id}&token=${resetPasswordToken}`;
+
+  await emaiLSender(
+    userData.email,
+    `
+        <div>
+          <p>Dear User, </p>
+          <p>Your Password Reset Link : 
+            <a href = ${resetPasswordLink}>
+              <button>Reset Password</button>
+            </a>
+          </p>
+        </div>
+      `
+  );
+  console.log(resetPasswordLink);
+};
+
+const resetPassword = async (
+  token: string,
+  payload: { id: string; password: string }
+) => {
+  // console.log({ token, payload });
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: payload.id,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  //verify if token valid
+  const isValidToken = jwtHelpers.verifyToken(
+    token,
+    config.jwt.reset_password_secret as Secret
+  );
+
+  if (!isValidToken) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Forbidden");
+  }
+  //hash password
+  const hashedPassword: string = await bcrypt.hash(payload.password, 12);
+
+  //Update kore dibo into database
+  const result = await prisma.user.update({
+    where: {
+      email: userData.email,
+      status: UserStatus.ACTIVE, //mane blocked user ra korte parbena password change
+    },
+    data: {
+      password: hashedPassword,
+    },
+  });
+
+  return result;
+};
+
 export const AuthServices = {
   loginUser,
   refreshToken,
   changePasswordInDB,
+  forgotPassword,
+  resetPassword,
 };

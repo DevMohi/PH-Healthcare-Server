@@ -6,7 +6,11 @@ import httpStatus from "http-status";
 import ApiError from "../errors/ApiErrors";
 
 const auth = (...roles: string[]) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (
+    req: Request & { user?: any },
+    res: Response,
+    next: NextFunction
+  ) => {
     // console.log(roles);
     try {
       //steps token pele decode korte hobe
