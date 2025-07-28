@@ -101,7 +101,49 @@ const refreshToken = async (token: string) => {
   };
 };
 
+const changePasswordInDB = async (user: any, payload: any) => {
+  //First step email find kora and compare
+  //payload password ta k compare koraba with current password
+  // hash korba new password ta k
+
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: user.email,
+    },
+  });
+
+  //Check given old password is similar to current password
+  const isCorrectPassword: boolean = await bcrypt.compare(
+    payload.oldPassword,
+    userData.password
+  );
+
+  if (!isCorrectPassword) {
+    throw new Error("Password Incorrect");
+  }
+
+  //Jodi correct thake tahole payload password take hash kore fele hocce next steps
+  const hashedPassword: string = await bcrypt.hash(payload.newPassword, 12);
+
+  //Update kore dibo ek
+  await prisma.user.update({
+    where: {
+      email: userData.email,
+      status: UserStatus.ACTIVE,
+    },
+    data: {
+      password: hashedPassword,
+      needPasswordChange: false,
+    },
+  });
+
+  return {
+    message: "Password Changed Successfully",
+  };
+};
+
 export const AuthServices = {
   loginUser,
   refreshToken,
+  changePasswordInDB,
 };

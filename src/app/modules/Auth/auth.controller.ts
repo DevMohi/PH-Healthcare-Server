@@ -37,7 +37,23 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Logged in successfully",
+    message: "New Access Token Generated Successfully",
+    data: result,
+    // data: {
+    //   accessToken: result.accessToken,
+    //   needPasswordChange: result.needPasswordChange,
+    // },
+  });
+});
+
+const changePassword = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  const result = await AuthServices.changePasswordInDB(user, req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Password Changed successfully",
     data: result,
     // data: {
     //   accessToken: result.accessToken,
@@ -49,4 +65,5 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
 export const AuthController = {
   loginUser,
   refreshToken,
+  changePassword,
 };

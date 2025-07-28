@@ -32,7 +32,6 @@ router.delete(
 router.delete(
   "/soft/:id",
   auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
-
   AdminController.softDeleteById
 );
 

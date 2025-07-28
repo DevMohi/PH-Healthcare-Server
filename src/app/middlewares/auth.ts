@@ -7,7 +7,7 @@ import ApiError from "../errors/ApiErrors";
 
 const auth = (...roles: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    console.log(roles);
+    // console.log(roles);
     try {
       //steps token pele decode korte hobe
       const token = req.headers.authorization;
@@ -18,6 +18,9 @@ const auth = (...roles: string[]) => {
         token,
         config.jwt.jwt_secret as Secret
       );
+
+      // console.log(verifiedUser);
+      req.user = verifiedUser;
 
       if (roles.length && !roles.includes(verifiedUser.role)) {
         throw new ApiError(httpStatus.FORBIDDEN, "You are not authorized");
