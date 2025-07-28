@@ -167,7 +167,7 @@ const forgotPassword = async (payload: { email: string }) => {
       role: userData.role,
     },
     config.jwt.reset_password_secret as Secret,
-    config.jwt.reset_password_token_expires_in as String
+    config.jwt.reset_password_token_expires_in
   );
   // console.log(resetPasswordToken, "See this ");
 
