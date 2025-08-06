@@ -44,6 +44,8 @@ model Admin {
   @@map("admins")
 }
 
+
+//One Doctor can have many specialties 
 model Doctor  {
   id String @id @default(uuid())
   name          String
@@ -61,6 +63,7 @@ model Doctor  {
   isDeleted Boolean @default(false)
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
+  doctorSpecialties DoctorSpecialties[]
 
   user          User     @relation(fields: [email], references: [email])
 
@@ -84,6 +87,29 @@ model Patient {
   @@map("patients")
 }
 
+
+//Specalties er shate doctor specaltier er one-to-many relation so basically a doctor has many specialties
+model Specialties {
+  id String   @id @unique @default(uuid())
+  title String 
+  icon String 
+  doctorSpecialties DoctorSpecialties[]
+
+  @@map("specialties")
+}
+
+model DoctorSpecialties {
+  specialtiesId String
+  specialities Specialties @relation(fields: [specialtiesId] , references: [id])
+  doctorId String 
+  doctor Doctor @relation(fields: [doctorId] , references: [id])
+
+
+  //Composite key to handle many to many
+  @@id ([specialtiesId , doctorId])
+  @@map("doctor_specialties")
+  
+}
 
 
 enum Gender {
