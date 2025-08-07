@@ -83,6 +83,8 @@ model Patient {
   updatedAt     DateTime @updatedAt
 
   user User @relation(references: [email], fields: [email])
+  patientHealthData PatientHealthData?
+  medicalReport MedicalReport[]
 
   @@map("patients")
 }
@@ -112,6 +114,47 @@ model DoctorSpecialties {
 }
 
 
+//Fk jeikane thake sheikane realtion ta lekbo 
+model PatientHealthData {
+  id String   @id @default(uuid())
+  patientId String @unique
+  patient Patient @relation(fields: [patientId] , references: [id])
+  dateOfBirth String 
+  gender Gender 
+  bloodGroup BloodGroup
+  hasAllergies Boolean
+  hasDiabetes Boolean 
+  height String 
+  weight String 
+  smokingStatus Boolean
+  dietaryPreferences String 
+  pregnancyStatus Boolean
+  mentalHealthHistory String
+  immunizationStatus String 
+  hasPastSurgeries String 
+  recentAnxiety String 
+  recentDepression String   
+  martialStatus MartialStatus
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+
+  @@map("patient_health_datas")
+}
+
+model MedicalReport  {
+  id String   @id @default(uuid())
+  patientId String 
+  patient Patient @relation(fields: [patientId], references: [id])
+  reportName String 
+  reportLink String 
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("medial_reports")
+}
+
+
 enum Gender {
   MALE
   FEMALE
@@ -128,4 +171,21 @@ enum UserStatus {
   ACTIVE
   BLOCKED
   DELETED
+}
+
+
+enum BloodGroup {
+  A_POSITIVE
+  B_POSITIVE
+  O_POSITIVE
+  AB_POSITIVE
+  A_NEGATIVE
+  B_NEGATIVE
+  O_NEGATIVE
+  AB_NEGATIVE
+}
+
+enum MartialStatus {
+  MARRIED
+  UNMARRIED
 }
