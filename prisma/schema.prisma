@@ -64,6 +64,7 @@ model Doctor  {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
   doctorSpecialties DoctorSpecialties[]
+  doctorSchedules DoctorSchedules[]
 
   user          User     @relation(fields: [email], references: [email])
 
@@ -122,19 +123,19 @@ model PatientHealthData {
   dateOfBirth String 
   gender Gender 
   bloodGroup BloodGroup
-  hasAllergies Boolean
-  hasDiabetes Boolean 
+  hasAllergies Boolean ? @default(false)
+  hasDiabetes Boolean ? @default(false)
   height String 
   weight String 
-  smokingStatus Boolean
-  dietaryPreferences String 
-  pregnancyStatus Boolean
-  mentalHealthHistory String
-  immunizationStatus String 
-  hasPastSurgeries String 
-  recentAnxiety String 
-  recentDepression String   
-  martialStatus MartialStatus
+  smokingStatus Boolean ? @default(false)
+  dietaryPreferences String ? 
+  pregnancyStatus Boolean ? @default(false)
+  mentalHealthHistory String ? 
+  immunizationStatus String ?
+  hasPastSurgeries Boolean ?  @default(false)
+  recentAnxiety Boolean ? @default(false)
+  recentDepression Boolean ?   @default(false)
+  martialStatus MartialStatus @default(UNMARRIED)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -153,6 +154,32 @@ model MedicalReport  {
 
   @@map("medial_reports")
 }
+
+model Schedule {
+  id String   @id @default(uuid())
+  startDateTime DateTime
+  endDateTime DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("schedules")
+  DoctorSchedules DoctorSchedules[]
+}
+
+model DoctorSchedules {
+  doctorId String
+  doctor Doctor @relation(fields: [doctorId] , references: [id])
+  scheduleId String
+  schedule Schedule @relation(fields: [scheduleId] , references: [id])
+  isBooked Boolean
+  appointmentId String? 
+
+  //aikane kono pk nai so composite key kora lagbe 
+  @@id([doctorId, scheduleId])
+
+  @@map("doctor_schedules")
+}
+
 
 
 enum Gender {
