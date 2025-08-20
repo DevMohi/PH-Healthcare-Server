@@ -1,5 +1,11 @@
 import { BloodGroup, Gender, MartialStatus } from "../../../generated/prisma";
 
+export type IPatientFilterRequest = {
+  searchTerm?: string | undefined;
+  email?: string | undefined;
+  contactNo?: string | undefined;
+};
+
 type IPatientHealthData = {
   gender: Gender;
   dateOfBirth: string;

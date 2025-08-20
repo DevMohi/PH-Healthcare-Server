@@ -1,7 +1,11 @@
 import { addHours, addMinutes, format } from "date-fns";
 import prisma from "../../../shared/prisma";
+import { Prisma, Schedule } from "../../../generated/prisma";
+import { ISchedule } from "./schedule.interface";
+import { IPaginationOptions } from "../../interfaces/pagination";
+import { paginationHelper } from "../../../helpers/paginationHelper";
 
-const insertIntoDB = async (payload: any) => {
+const insertIntoDB = async (payload: ISchedule): Promise<Schedule[]> => {
   // console.log(payload);
   const { startDate, endDate, startTime, endTime } = payload;
 
@@ -16,15 +20,21 @@ const insertIntoDB = async (payload: any) => {
   while (currentDate <= lastDate) {
     //add time to currentStartDate split because time is like this 09:30
     const startDateTime = new Date(
-      addHours(
-        `${format(currentDate, "yyyy-MM-dd")}`,
-        Number(startTime.split(":")[0])
+      addMinutes(
+        addHours(
+          `${format(currentDate, "yyyy-MM-dd")}`,
+          Number(startTime.split(":")[0])
+        ),
+        Number(startTime.split(":")[1])
       )
     );
     const endDateTime = new Date(
-      addHours(
-        `${format(currentDate, "yyyy-MM-dd")}`,
-        Number(endTime.split(":")[0])
+      addMinutes(
+        addHours(
+          `${format(currentDate, "yyyy-MM-dd")}`,
+          Number(endTime.split(":")[0])
+        ),
+        Number(endTime.split(":")[1])
       )
     );
     while (startDateTime < endDateTime) {
@@ -34,11 +44,21 @@ const insertIntoDB = async (payload: any) => {
         endDateTime: addMinutes(startDateTime, intervalTime),
       };
 
-      const result = await prisma.schedule.create({
-        data: scheduleData,
+      //not allowing duplicate data
+      const existingSchedule = await prisma.schedule.findFirst({
+        where: {
+          startDateTime: scheduleData.startDateTime,
+          endDateTime: scheduleData.endDateTime,
+        },
       });
 
-      schedules.push(result);
+      if (!existingSchedule) {
+        const result = await prisma.schedule.create({
+          data: scheduleData,
+        });
+        schedules.push(result);
+      }
+
       startDateTime.setMinutes(startDateTime.getMinutes() + intervalTime);
     }
 
@@ -48,8 +68,55 @@ const insertIntoDB = async (payload: any) => {
   return schedules;
 };
 
+const getAllFromDB = async (filters: any, options: IPaginationOptions) => {
+  const { limit, page, skip } = paginationHelper.calculatePagination(options);
+  const { searchTerm, ...filterData } = filters;
+
+  const andConditions = [];
+
+  if (Object.keys(filterData).length > 0) {
+    andConditions.push({
+      AND: Object.keys(filterData).map((key) => {
+        return {
+          [key]: {
+            equals: (filterData as any)[key],
+          },
+        };
+      }),
+    });
+  }
+
+  const whereConditions: Prisma.ScheduleWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
+  const result = await prisma.schedule.findMany({
+    where: whereConditions,
+    skip,
+    take: limit,
+    orderBy:
+      options.sortBy && options.sortOrder
+        ? { [options.sortBy]: options.sortOrder }
+        : {
+            createdAt: "desc",
+          },
+  });
+  const total = await prisma.schedule.count({
+    where: whereConditions,
+  });
+
+  return {
+    meta: {
+      total,
+      page,
+      limit,
+    },
+    data: result,
+  };
+};
+
 export const ScheduleService = {
   insertIntoDB,
+  getAllFromDB,
 };
 
 /*
