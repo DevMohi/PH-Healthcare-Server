@@ -1,8 +1,10 @@
 import { Prisma } from "../../../generated/prisma";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import prisma from "../../../shared/prisma";
+import ApiError from "../../errors/ApiErrors";
 import { IAuthUser } from "../../interfaces/common";
 import { IPaginationOptions } from "../../interfaces/pagination";
+import httpStatus from "http-status";
 
 const insertIntoDB = async (
   user: any,
@@ -110,7 +112,42 @@ const getMySchedule = async (
   };
 };
 
+const deleteFromDB = async (user: IAuthUser, scheduleId: string) => {
+  const doctorData = await prisma.doctor.findUniqueOrThrow({
+    where: {
+      email: user?.email,
+    },
+  });
+
+  const isBookedSchedule = await prisma.doctorSchedules.findFirst({
+    where: {
+      doctorId: doctorData.id,
+      scheduleId: scheduleId,
+
+      isBooked: true,
+    },
+  });
+
+  if (isBookedSchedule) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You cannot delete as it is already booked"
+    );
+  }
+
+  //how to delete a composite key
+  const result = await prisma.doctorSchedules.delete({
+    where: {
+      doctorId_scheduleId: {
+        doctorId: doctorData.id,
+        scheduleId: scheduleId,
+      },
+    },
+  });
+};
+
 export const DoctorScheduleService = {
   insertIntoDB,
   getMySchedule,
+  deleteFromDB,
 };
