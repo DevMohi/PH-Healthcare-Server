@@ -123,7 +123,6 @@ const deleteFromDB = async (user: IAuthUser, scheduleId: string) => {
     where: {
       doctorId: doctorData.id,
       scheduleId: scheduleId,
-
       isBooked: true,
     },
   });
@@ -136,6 +135,7 @@ const deleteFromDB = async (user: IAuthUser, scheduleId: string) => {
   }
 
   //how to delete a composite key
+  //Hello
   const result = await prisma.doctorSchedules.delete({
     where: {
       doctorId_scheduleId: {
@@ -151,3 +151,5 @@ export const DoctorScheduleService = {
   getMySchedule,
   deleteFromDB,
 };
+
+//module 67
